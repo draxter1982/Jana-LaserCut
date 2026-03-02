@@ -224,7 +224,7 @@
 <script type="module">
     // --- FIREBASE IMPORTS ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, onSnapshot, increment, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     // --- SETUP GLOBALS ---
@@ -264,7 +264,7 @@
         const toast = document.getElementById('toast');
         document.getElementById('toastMsg').innerText = msg;
         toast.style.opacity = '1'; toast.style.bottom = '40px';
-        setTimeout(() => { toast.style.opacity = '0'; toast.style.bottom = '24px'; }, 3000);
+        setTimeout(() => { toast.style.opacity = '0'; toast.style.bottom = '24px'; }, 4000);
     };
 
     function switchView(viewId) {
@@ -281,15 +281,12 @@
     }
 
     // --- AUTHENTICATION & FIREBASE ---
-    // Logik onAuthStateChanged akan terus berjalan membaca cache pelayar web tanpa sebarang delay
     onAuthStateChanged(auth, async (user) => {
         currentUser = user;
-        if (user && !user.isAnonymous) {
-            // User is logged in with Google
-            document.getElementById('navAvatar').src = user.photoURL || 'https://ui-avatars.com/api/?name='+user.displayName;
+        if (user) {
+            document.getElementById('navAvatar').src = user.photoURL || 'https://ui-avatars.com/api/?name=' + (user.displayName || 'Test');
             await setupUserProfile(user);
         } else {
-            // Not logged in or anonymous
             switchView('loginView');
             if(unsubscribeProfile) unsubscribeProfile();
             if(unsubscribeAdmin) unsubscribeAdmin();
@@ -304,8 +301,14 @@
             await signInWithPopup(auth, provider);
         } catch (error) {
             console.error(error);
-            window.showToast("Ralat log masuk: " + error.message);
-            switchView('loginView');
+            // KEMAS KINI: Berikan mesej ralat yang mengajar pengguna cara membetulkannya di Firebase
+            if (error.code === 'auth/unauthorized-domain' || error.message.includes('unauthorized-domain')) {
+                window.showToast("PENTING: Sila log masuk ke Firebase Console -> Authentication -> Settings -> Authorized domains, dan tambah domain Vercel anda.");
+                switchView('loginView');
+            } else {
+                window.showToast("Ralat log masuk: " + error.message);
+                switchView('loginView');
+            }
         }
     };
 
@@ -315,25 +318,22 @@
     };
 
     async function setupUserProfile(user) {
-        // PERATURAN 1: Gunakan laluan public supaya admin boleh baca data semua pengguna
         const profileRef = doc(db, 'artifacts', appId, 'public', 'data', 'profiles', user.uid);
         
         try {
             const docSnap = await getDoc(profileRef);
             if (!docSnap.exists()) {
-                // Pengguna baru, berikan 5 kredit percuma
                 await setDoc(profileRef, {
                     uid: user.uid,
                     name: user.displayName || 'Pengguna',
                     email: user.email || '',
                     photoURL: user.photoURL || '',
                     credits: 5,
-                    role: 'user', // 'admin' atau 'user'
+                    role: 'user',
                     createdAt: serverTimestamp()
                 });
             }
 
-            // Dengarkan perubahan kredit masa nyata
             unsubscribeProfile = onSnapshot(profileRef, (doc) => {
                 if(doc.exists()) {
                     userProfile = doc.data();
@@ -351,9 +351,8 @@
 
         } catch (error) {
             console.error("Ralat profail:", error);
-            // Kemas kini: Tunjukkan mesej ralat spesifik dan kembalikan pengguna ke login
             window.showToast("Ralat Pangkalan Data: " + error.message);
-            await signOut(auth); // Memastikan pengguna tidak tersekat
+            if (auth.currentUser) await signOut(auth); 
             switchView('loginView');
         }
     }
@@ -419,7 +418,6 @@
         const procModal = document.getElementById('processingModal');
         procModal.classList.remove('hidden');
 
-        // Simulasi kelewatan rangkaian/bank gateway
         setTimeout(async () => {
             try {
                 const profileRef = doc(db, 'artifacts', appId, 'public', 'data', 'profiles', currentUser.uid);
@@ -436,33 +434,27 @@
 
 
     // --- AI GENERATOR LOGIC ---
-    async function fetchWithRetry(url, options, maxRetries = 5) {
-        let delay = 1000;
-        for (let i = 0; i < maxRetries; i++) {
-            try {
-                const response = await fetch(url, options);
-                
-                // Jika berjaya, pulangkan JSON
-                if (response.ok) {
-                    return await response.json();
-                }
-
-                // Tangkap ralat spesifik dari API Gemini (seperti 400 Bad Request, API Key Invalid)
-                if (response.status >= 400 && response.status < 500 && response.status !== 429) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error?.message || `Ralat API: Kod ${response.status}`);
-                }
-            } catch (e) {
-                // Jangan ulang jika ia adalah ralat API yang muktamad
-                if (e.message.includes('API key') || e.message.includes('Ralat API') || e.message.includes('not valid')) {
-                    throw e;
-                }
+    // KEMAS KINI: Membuang struktur retry yang mengelirukan ralat sebenar supaya ralat dapat dikesan.
+    async function fetchGeminiAPI(url, options) {
+        try {
+            const response = await fetch(url, options);
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                let errMsg = `Ralat Kod ${response.status}`;
+                try {
+                    const errJson = JSON.parse(errorText);
+                    if (errJson.error && errJson.error.message) {
+                        errMsg = errJson.error.message;
+                    }
+                } catch (e) {}
+                throw new Error(`Ralat API Google: ${errMsg}`);
             }
-            // Ulang untuk ralat rangkaian / ralat 429
-            if (i < maxRetries - 1) await new Promise(resolve => setTimeout(resolve, delay));
-            delay *= 2;
+            
+            return await response.json();
+        } catch (e) {
+            throw new Error(`Gagal memanggil API: ${e.message}`);
         }
-        throw new Error("Gagal menghubungi server AI selepas beberapa percubaan.");
     }
 
     window.handleImageUpload = function(event) {
@@ -527,9 +519,11 @@
         try {
             progressBar.style.width = '50%'; statusText.innerText = "Menganalisa vektor...";
             
-            // KEMAS KINI: Menukar URL model percubaan kepada gemini-1.5-flash yang disokong untuk API awam
-            const data = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
+            // KEMAS KINI: Menukar url kepada gemini-1.5-flash standard untuk kestabilan tertinggi
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+            const data = await fetchGeminiAPI(url, {
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ contents: [{ parts: requestParts }] })
             });
 
@@ -559,7 +553,7 @@
             progressBar.style.width = '100%';
         } catch (error) {
             console.error(error); 
-            // Papar mesej ralat sebenar jika API Key ditolak / kuota habis
+            // Paparkan ralat secara jelas
             window.showToast(error.message);
         } finally {
             btn.disabled = false; spinner.classList.add('hidden');
