@@ -497,9 +497,9 @@
         try {
             progressBar.style.width = '50%'; statusText.innerText = "Menganalisa vektor...";
             
+            // URL stabil untuk model gemini-1.5-flash
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
             
-            // Panggilan langsung API tanpa fungsi retry supaya ralat sebenar mudah ditangkap
             console.log("Memulakan permintaan ke API Gemini...");
             const response = await fetch(url, {
                 method: 'POST', 
