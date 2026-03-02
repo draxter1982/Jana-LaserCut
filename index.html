@@ -351,7 +351,10 @@
 
         } catch (error) {
             console.error("Ralat profail:", error);
-            window.showToast("Ralat memuatkan profail");
+            // Kemas kini: Tunjukkan mesej ralat spesifik dan kembalikan pengguna ke login
+            window.showToast("Ralat Pangkalan Data: " + error.message);
+            await signOut(auth); // Memastikan pengguna tidak tersekat
+            switchView('loginView');
         }
     }
 
@@ -438,13 +441,28 @@
         for (let i = 0; i < maxRetries; i++) {
             try {
                 const response = await fetch(url, options);
-                if (response.ok) return await response.json();
-                if (response.status !== 429 && response.status < 500) break;
-            } catch (e) {}
-            await new Promise(resolve => setTimeout(resolve, delay));
+                
+                // Jika berjaya, pulangkan JSON
+                if (response.ok) {
+                    return await response.json();
+                }
+
+                // Tangkap ralat spesifik dari API Gemini (seperti 400 Bad Request, API Key Invalid)
+                if (response.status >= 400 && response.status < 500 && response.status !== 429) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error?.message || `Ralat API: Kod ${response.status}`);
+                }
+            } catch (e) {
+                // Jangan ulang jika ia adalah ralat API yang muktamad
+                if (e.message.includes('API key') || e.message.includes('Ralat API') || e.message.includes('not valid')) {
+                    throw e;
+                }
+            }
+            // Ulang untuk ralat rangkaian / ralat 429
+            if (i < maxRetries - 1) await new Promise(resolve => setTimeout(resolve, delay));
             delay *= 2;
         }
-        throw new Error("Gagal menghubungi server AI.");
+        throw new Error("Gagal menghubungi server AI selepas beberapa percubaan.");
     }
 
     window.handleImageUpload = function(event) {
@@ -508,7 +526,9 @@
 
         try {
             progressBar.style.width = '50%'; statusText.innerText = "Menganalisa vektor...";
-            const data = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+            
+            // KEMAS KINI: Menukar URL model percubaan kepada gemini-1.5-flash yang disokong untuk API awam
+            const data = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ contents: [{ parts: requestParts }] })
             });
@@ -538,7 +558,9 @@
             }
             progressBar.style.width = '100%';
         } catch (error) {
-            console.error(error); window.showToast(error.message);
+            console.error(error); 
+            // Papar mesej ralat sebenar jika API Key ditolak / kuota habis
+            window.showToast(error.message);
         } finally {
             btn.disabled = false; spinner.classList.add('hidden');
             btnText.innerText = "Jana Rekaan (Tolak 1 Kredit)";
