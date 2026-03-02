@@ -434,28 +434,6 @@
 
 
     // --- AI GENERATOR LOGIC ---
-    // KEMAS KINI: Membuang struktur retry yang mengelirukan ralat sebenar supaya ralat dapat dikesan.
-    async function fetchGeminiAPI(url, options) {
-        try {
-            const response = await fetch(url, options);
-            
-            if (!response.ok) {
-                const errorText = await response.text();
-                let errMsg = `Ralat Kod ${response.status}`;
-                try {
-                    const errJson = JSON.parse(errorText);
-                    if (errJson.error && errJson.error.message) {
-                        errMsg = errJson.error.message;
-                    }
-                } catch (e) {}
-                throw new Error(`Ralat API Google: ${errMsg}`);
-            }
-            
-            return await response.json();
-        } catch (e) {
-            throw new Error(`Gagal memanggil API: ${e.message}`);
-        }
-    }
 
     window.handleImageUpload = function(event) {
         const file = event.target.files[0];
@@ -519,16 +497,32 @@
         try {
             progressBar.style.width = '50%'; statusText.innerText = "Menganalisa vektor...";
             
-            // KEMAS KINI: Menukar url kepada gemini-1.5-flash standard untuk kestabilan tertinggi
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-            const data = await fetchGeminiAPI(url, {
+            
+            // Panggilan langsung API tanpa fungsi retry supaya ralat sebenar mudah ditangkap
+            console.log("Memulakan permintaan ke API Gemini...");
+            const response = await fetch(url, {
                 method: 'POST', 
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ contents: [{ parts: requestParts }] })
             });
 
+            console.log("Status respons API:", response.status);
+
+            if (!response.ok) {
+                let ralatText = await response.text();
+                console.error("Ralat pelayan:", ralatText);
+                throw new Error(`Ralat pelayan: Kod ${response.status}`);
+            }
+
+            const data = await response.json();
+            
+            if (!data.candidates || data.candidates.length === 0) {
+                 throw new Error("API tidak mengembalikan apa-apa rekaan.");
+            }
+
             progressBar.style.width = '80%'; statusText.innerText = "Menghalusi kod SVG...";
-            let rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+            let rawText = data.candidates[0].content.parts[0].text || "";
             let svgCode = rawText.replace(/```svg/g, '').replace(/```xml/g, '').replace(/```/g, '').trim();
 
             if (!svgCode.includes('<svg')) throw new Error("Format SVG tidak sah dari AI.");
@@ -552,9 +546,8 @@
             }
             progressBar.style.width = '100%';
         } catch (error) {
-            console.error(error); 
-            // Paparkan ralat secara jelas
-            window.showToast(error.message);
+            console.error("Ralat terperinci:", error); 
+            window.showToast("Gagal: " + error.message);
         } finally {
             btn.disabled = false; spinner.classList.add('hidden');
             btnText.innerText = "Jana Rekaan (Tolak 1 Kredit)";
