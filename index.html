@@ -224,7 +224,7 @@
 <script type="module">
     // --- FIREBASE IMPORTS ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, onSnapshot, increment, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     // --- SETUP GLOBALS ---
@@ -281,17 +281,7 @@
     }
 
     // --- AUTHENTICATION & FIREBASE ---
-    const initAuth = async () => {
-        try {
-            // Abaikan __initial_auth_token kerana ia menyebabkan ralat 'custom-token-mismatch' 
-            // pada projek Firebase peribadi. Kita terus guna signInAnonymously sebagai asas.
-            await signInAnonymously(auth);
-        } catch (error) {
-            console.warn("Ralat inisialisasi auth awanama:", error);
-        }
-    };
-    initAuth();
-
+    // Logik onAuthStateChanged akan terus berjalan membaca cache pelayar web tanpa sebarang delay
     onAuthStateChanged(auth, async (user) => {
         currentUser = user;
         if (user && !user.isAnonymous) {
