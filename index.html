@@ -333,7 +333,14 @@
 
         } catch (error) {
             console.error('Ralat:', error);
-            showError('Gagal menjana rekaan. Ralat: ' + error.message);
+            let userFriendlyMessage = error.message;
+            if (error.message.includes('403')) {
+                userFriendlyMessage = "Akses API ditolak (Ralat 403). Sila cuba sebentar lagi atau pastikan anda disambung ke rangkaian yang dibenarkan.";
+            } else if (error.message.includes('429')) {
+                userFriendlyMessage = "Terlalu banyak permintaan (Ralat 429). Sistem sedang sibuk. Sila cuba lagi dalam beberapa minit.";
+            }
+            
+            showError('Gagal menjana rekaan. ' + userFriendlyMessage);
             document.getElementById('preview').innerHTML = '<p style="color:#888;">Sila cuba lagi.</p>';
         } finally {
             document.getElementById('loadingText').style.display = 'none';
