@@ -373,14 +373,24 @@
         if(!svgElement) return;
 
         const cloneSVG = svgElement.cloneNode(true);
+        
+        // Buang stail paparan dan pastikan atribut fizikal diset dalam cm
         cloneSVG.style.width = '';
         cloneSVG.style.height = '';
+        
+        const sliderVal = document.getElementById('sizeSlider').value;
+        const widthCm = parseFloat(sliderVal);
+        const heightCm = (widthCm / aspectRatio).toFixed(2); 
+
+        // Set ukuran rasmi kepada ukuran fizikal (cm)
+        cloneSVG.setAttribute('width', `${widthCm}cm`);
+        cloneSVG.setAttribute('height', `${heightCm}cm`);
 
         const serializer = new XMLSerializer();
         let finalSVGCode = serializer.serializeToString(cloneSVG);
         
-        if (!finalSVGCode.includes('xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)"')) {
-            finalSVGCode = finalSVGCode.replace('<svg ', '<svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" ');
+        if (!finalSVGCode.includes('xmlns="http://www.w3.org/2000/svg"')) {
+            finalSVGCode = finalSVGCode.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" ');
         }
 
         const blob = new Blob([finalSVGCode], { type: 'image/svg+xml;charset=utf-8' });
