@@ -3,593 +3,389 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro-Laser Cut AI (SaaS)</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Sistem Prompt-to-Design Laser Cut</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; margin: 0; }
-        .svg-preview-bg {
-            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
-            background-size: 20px 20px;
+        :root {
+            --primary: #28a745;
+            --primary-hover: #218838;
+            --secondary: #007bff;
+            --secondary-hover: #0056b3;
+            --bg-color: #f4f4f9;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --border-color: #cccccc;
         }
-        .shimmer {
-            background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.5s infinite;
+
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background-color: var(--bg-color); 
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
         }
-        @keyframes shimmer {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
+        
+        .container { 
+            width: 100%;
+            max-width: 800px; 
+            background: var(--card-bg); 
+            padding: 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 8px 16px rgba(0,0,0,0.05); 
         }
-        /* Hide scrollbar for clean UI */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        h2 { margin-top: 0; color: #111; }
+        .subtitle { color: #666; margin-bottom: 20px; font-size: 0.95em; }
+        
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 8px; color: #444; }
+
+        select, textarea { 
+            width: 100%; 
+            padding: 12px; 
+            border-radius: 8px; 
+            border: 1px solid var(--border-color); 
+            font-family: inherit; 
+            font-size: 15px;
+            box-sizing: border-box;
+            background-color: #fff;
+        }
+
+        textarea { height: 100px; resize: vertical; }
+        textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.2);
+        }
+
+        #customGemContainer { display: none; margin-top: 10px; }
+        #customGemInput { background-color: #fdfdfd; border-style: dashed; }
+
+        button { 
+            background-color: var(--primary); 
+            color: white; 
+            border: none; 
+            padding: 12px 24px; 
+            cursor: pointer; 
+            border-radius: 6px; 
+            font-weight: 600; 
+            font-size: 16px;
+            transition: background-color 0.2s ease;
+            margin-right: 10px; 
+        }
+        button:hover { background-color: var(--primary-hover); }
+        button:disabled { background-color: #a5d8b1; cursor: not-allowed; }
+        
+        #downloadBtn { 
+            background-color: var(--secondary); 
+            display: none; 
+            margin-top: 20px; 
+            width: 100%;
+        }
+        #downloadBtn:hover { background-color: var(--secondary-hover); }
+        
+        /* Ruangan Preview dan Slider */
+        #preview-container { 
+            margin-top: 25px; 
+            border: 2px dashed var(--border-color); 
+            border-radius: 8px;
+            padding: 20px; 
+            background: #fafafa; 
+            text-align: center; 
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+        #preview { width: 100%; }
+        #preview svg { 
+            max-width: 100%; 
+            height: auto; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            background-color: white;
+        } 
+        
+        .loader { 
+            display: none; 
+            font-style: italic; 
+            color: var(--secondary); 
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        .error-msg {
+            display: none;
+            color: #dc3545;
+            background-color: #f8d7da;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 15px;
+            font-weight: 500;
+        }
+        
+        /* Gaya untuk Slider */
+        #sizeControls { 
+            display: none; 
+            margin-top: 25px; 
+            padding: 20px; 
+            background: #f8f9fa; 
+            border-radius: 8px; 
+            border: 1px solid #e9ecef;
+        }
+        .slider { width: 100%; margin: 15px 0; cursor: pointer; }
+        .size-display { 
+            font-size: 1.1em; 
+            font-weight: 600; 
+            color: #444; 
+            text-align: center;
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+        }
+
+        .gem-badge {
+            display: inline-block;
+            background: #6f42c1;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 600px) {
+            button { width: 100%; margin-bottom: 10px; }
+        }
     </style>
 </head>
-<body class="flex flex-col min-h-screen">
+<body>
 
-<!-- Top Navigation Bar -->
-<nav id="navbar" class="bg-slate-900 text-white shadow-md hidden px-4 py-3 md:px-8 flex items-center justify-between sticky top-0 z-40">
-    <div class="flex items-center gap-3">
-        <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-        <span class="font-bold text-lg tracking-tight">LaserAI Pro</span>
-    </div>
-    <div class="flex items-center gap-4">
-        <div class="bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700 flex items-center gap-2">
-            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <span id="navCredits" class="font-bold text-emerald-400 text-sm">0 Kredit</span>
-            <button onclick="window.showPaymentModal()" class="ml-2 bg-blue-600 hover:bg-blue-500 text-white text-xs px-2 py-0.5 rounded transition-colors">Topup</button>
-        </div>
-        <button id="navAdminBtn" onclick="window.toggleAdminView()" class="hidden text-sm text-slate-300 hover:text-white transition-colors">Admin</button>
-        <div class="flex items-center gap-2 border-l border-slate-700 pl-4">
-            <img id="navAvatar" src="" alt="Avatar" class="w-8 h-8 rounded-full border border-slate-600">
-            <button onclick="window.logout()" class="text-sm text-red-400 hover:text-red-300 transition-colors" title="Log Keluar">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-            </button>
-        </div>
-    </div>
-</nav>
-
-<!-- Initial Loading Screen -->
-<div id="authLoading" class="flex-1 flex flex-col items-center justify-center bg-slate-50">
-    <div class="animate-spin h-10 w-10 border-4 border-blue-600 border-t-transparent rounded-full mb-4"></div>
-    <p class="text-slate-500 font-medium">Menyemak status log masuk...</p>
-</div>
-
-<!-- Login View -->
-<div id="loginView" class="hidden flex-1 flex items-center justify-center bg-slate-50 p-4">
-    <div class="max-w-md w-full bg-white rounded-2xl shadow-xl border border-slate-200 p-8 text-center">
-        <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-        </div>
-        <h2 class="text-2xl font-bold text-slate-800 mb-2">Log Masuk AI Studio</h2>
-        <p class="text-slate-500 text-sm mb-8">Sistem penjanaan rekaan laser cut dikuasakan oleh kecerdasan buatan.</p>
-        
-        <button onclick="window.loginWithGoogle()" class="w-full flex items-center justify-center gap-3 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold py-3 px-4 rounded-xl shadow-sm transition-all">
-            <svg class="w-5 h-5" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-            Teruskan dengan Google
-        </button>
-    </div>
-</div>
-
-<!-- Main App View -->
-<div id="mainView" class="hidden flex-1 p-4 md:p-8">
-    <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
-        <div class="p-6 space-y-6">
-            <!-- Input Area -->
-            <div>
-                <label class="block text-sm font-semibold text-slate-700 mb-2">Terangkan Rekaan Anda (1 Kredit setiap janaan):</label>
-                <textarea id="promptInput" 
-                    class="w-full h-32 p-4 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none text-slate-700"
-                    placeholder="Contoh: Rekaan piala badminton dengan tapak bulat. Letakkan teks 'JUARA' di bahagian tengah badan piala. Asingkan tapak dan badan untuk flat-pack..."></textarea>
-            </div>
-
-            <!-- Image Upload -->
-            <div class="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center hover:bg-slate-50 transition-colors relative">
-                <input type="file" id="imageInput" accept="image/png, image/jpeg, image/webp" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="window.handleImageUpload(event)">
-                <div id="uploadPrompt" class="flex flex-col items-center pointer-events-none">
-                    <svg class="w-8 h-8 text-slate-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                    <span class="text-sm font-medium text-slate-600">Muat Naik Gambar Rujukan (Opsional)</span>
-                </div>
-                <div id="imagePreviewContainer" class="hidden items-center justify-between bg-white border border-slate-200 p-2 rounded-lg relative z-10">
-                    <div class="flex items-center gap-3">
-                        <img id="imagePreview" src="" alt="Preview" class="w-12 h-12 object-cover rounded shadow-sm">
-                        <span id="imageName" class="text-sm font-medium text-slate-700 truncate max-wxs"></span>
-                    </div>
-                    <button onclick="window.removeImage(event)" class="p-2 text-red-500 hover:bg-red-50 rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
-                </div>
-            </div>
-
-            <div class="flex flex-wrap gap-3">
-                <button onclick="window.generateDesign()" id="generateBtn" 
-                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-blue-200 transition-all flex items-center justify-center gap-2">
-                    <span id="btnText">Jana Rekaan (Tolak 1 Kredit)</span>
-                    <div id="btnSpinner" class="hidden animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
-                </button>
-                <button onclick="window.clearAll()" class="px-6 py-3 border border-slate-300 rounded-xl hover:bg-slate-50 font-medium text-slate-600 transition-all">Kosongkan</button>
-            </div>
-
-            <!-- Progress -->
-            <div id="statusContainer" class="hidden">
-                <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                    <div id="progressBar" class="bg-blue-600 h-full w-0 transition-all duration-500"></div>
-                </div>
-                <p id="statusText" class="text-xs text-slate-500 mt-2 text-center italic"></p>
-            </div>
-
-            <!-- Control Panel -->
-            <div id="sizeControls" class="hidden space-y-4 bg-slate-50 p-5 rounded-xl border border-slate-200">
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div class="flex-1">
-                        <label class="block text-sm font-bold text-slate-700 mb-1">Pelarasan Saiz Lebar:</label>
-                        <input type="range" id="sizeSlider" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600" min="5" max="80" value="20" oninput="window.updateSize()">
-                    </div>
-                    <div class="bg-white px-4 py-2 rounded-lg border border-slate-200 text-center"><span id="sizeDisplay" class="text-sm font-mono font-bold text-blue-700">W: 20cm | H: --cm</span></div>
-                </div>
-                <div class="flex gap-2">
-                    <button onclick="window.downloadSVG()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg shadow-lg shadow-emerald-100">Muat Turun SVG</button>
-                    <button onclick="window.copyToClipboard()" class="p-3 bg-slate-200 hover:bg-slate-300 rounded-lg" title="Salin Kod">📋</button>
-                </div>
-            </div>
-
-            <!-- Preview -->
-            <div id="previewContainer" class="relative group">
-                <div class="absolute top-4 left-4 bg-white/80 backdrop-blur px-3 py-1 rounded-full border border-slate-200 text-[10px] font-bold text-slate-500 z-10 uppercase">Preview Design</div>
-                <div id="preview" class="svg-preview-bg min-h-[350px] border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center overflow-auto p-8">
-                    <div class="text-center text-slate-400">Pratonton akan muncul di sini</div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Admin Dashboard View -->
-<div id="adminView" class="hidden flex-1 p-4 md:p-8">
-    <div class="max-w-6xl mx-auto bg-white rounded-2xl shadow-xl border border-slate-200 p-6">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold text-slate-800">Admin Dashboard</h2>
-            <button onclick="window.toggleAdminView()" class="text-blue-600 text-sm font-medium hover:underline">Kembali ke Studio</button>
-        </div>
-        
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="bg-slate-50 border-b border-slate-200 text-sm text-slate-600">
-                        <th class="p-3">Pengguna</th>
-                        <th class="p-3">Email</th>
-                        <th class="p-3">Kredit Semasa</th>
-                        <th class="p-3">Peranan</th>
-                        <th class="p-3">Tindakan</th>
-                    </tr>
-                </thead>
-                <tbody id="adminUserTable" class="text-sm">
-                    <!-- Data pengguna akan dimasukkan di sini -->
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<!-- Payment Modal (ToyyibPay Mock) -->
-<div id="paymentModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
-        <div class="bg-blue-600 p-4 text-white flex justify-between items-center">
-            <h3 class="font-bold text-lg">Tambah Nilai Kredit</h3>
-            <button onclick="window.closePaymentModal()" class="text-white hover:text-slate-200"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
-        </div>
-        <div class="p-6 space-y-4">
-            <div class="p-3 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-800 mb-4">
-                <strong>Pemberitahuan:</strong> Ini adalah integrasi simulasi (mock) ToyyibPay untuk tujuan paparan *frontend*.
-            </div>
-            
-            <!-- Packages -->
-            <div class="border border-slate-200 rounded-xl p-4 flex justify-between items-center hover:border-blue-500 cursor-pointer transition-colors" onclick="window.processPayment(5, 20)">
-                <div>
-                    <h4 class="font-bold text-slate-800">Pakej Asas</h4>
-                    <p class="text-sm text-slate-500">20 Kredit Penjanaan</p>
-                </div>
-                <div class="bg-slate-100 px-3 py-1 rounded font-bold text-slate-700">RM 5.00</div>
-            </div>
-            <div class="border border-blue-500 bg-blue-50 rounded-xl p-4 flex justify-between items-center cursor-pointer transition-colors shadow-sm relative overflow-hidden" onclick="window.processPayment(10, 50)">
-                <div class="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-bl-lg">POPULAR</div>
-                <div>
-                    <h4 class="font-bold text-blue-900">Pakej Pro</h4>
-                    <p class="text-sm text-blue-700">50 Kredit Penjanaan</p>
-                </div>
-                <div class="bg-blue-600 px-3 py-1 rounded font-bold text-white">RM 10.00</div>
-            </div>
-            <div class="border border-slate-200 rounded-xl p-4 flex justify-between items-center hover:border-blue-500 cursor-pointer transition-colors" onclick="window.processPayment(20, 120)">
-                <div>
-                    <h4 class="font-bold text-slate-800">Pakej Premium</h4>
-                    <p class="text-sm text-slate-500">120 Kredit Penjanaan</p>
-                </div>
-                <div class="bg-slate-100 px-3 py-1 rounded font-bold text-slate-700">RM 20.00</div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ToyyibPay Processing Mock Modal -->
-<div id="processingModal" class="hidden fixed inset-0 bg-slate-900/80 z-[60] flex flex-col items-center justify-center text-white">
-    <div class="animate-spin h-12 w-12 border-4 border-blue-500 border-t-transparent rounded-full mb-4"></div>
-    <h3 class="text-xl font-bold">Menyambung ke ToyyibPay...</h3>
-    <p class="text-slate-400 text-sm mt-2">Sila tunggu sebentar, transaksi sedang diproses.</p>
-</div>
-
-<!-- Toast -->
-<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-full shadow-2xl opacity-0 transition-all duration-300 pointer-events-none z-50 text-sm">
-    <span id="toastMsg">Mesej di sini</span>
-</div>
-
-<script type="module">
-    // --- FIREBASE IMPORTS ---
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, onSnapshot, increment, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-    // --- SETUP GLOBALS ---
-    const apiKey = "AIzaSyDbPUmDhbMTtVbU0NKAFMd5uB6sQCyJn1U"; // Gemini API Key
+<div class="container">
+    <h2>Sistem Penjana SVG Laser Cut</h2>
+    <p class="subtitle">Pilih kepakaran AI (Gem) dan masukkan deskripsi rekaan anda.</p>
     
-    // GANTIKAN MAKLUMAT DI BAWAH DENGAN CONFIG FIREBASE ANDA
-    const firebaseConfig = {
-        apiKey: "AIzaSyDi6Mn3lrO9SlRGAWs3dA6GZ5MrnyKK9e4",
-        authDomain: "jana-lasercut.firebaseapp.com",
-        projectId: "jana-lasercut",
-        storageBucket: "jana-lasercut.firebasestorage.app",
-        messagingSenderId: "201415054622",
-        appId: "1:201415054622:web:15ee8d42b6eda06ccf650f",
-        measurementId: "G-066W2MZ0JH"
-    };
-    const appId = 'jana-lasercut';
+    <!-- Bahagian Pemilihan Gem -->
+    <div class="form-group">
+        <label for="gemSelector"><span class="gem-badge">✨ Profil Gem</span> Pilih Pakar Rekaan:</label>
+        <select id="gemSelector" onchange="toggleCustomGem()">
+            <option value="asas">Gem Asas (Pakar Vektor Umum)</option>
+            <option value="kotak">Gem Pakar Kotak & Cantuman (Tab/Slot)</option>
+            <option value="aksesori">Gem Pakar Aksesori (Keychain/Subang)</option>
+            <option value="custom">🛠️ Cipta Gem Sendiri (Custom Prompt)</option>
+        </select>
+        
+        <div id="customGemContainer">
+            <textarea id="customGemInput" placeholder="Masukkan arahan (System Instruction) khas untuk Gem anda di sini. Contoh: 'Anda adalah pakar pembuat stensil. Pastikan semua huruf bersambung...'"></textarea>
+        </div>
+    </div>
+
+    <!-- Bahagian Input Pengguna -->
+    <div class="form-group">
+        <label for="promptInput">Deskripsi Rekaan (Prompt):</label>
+        <textarea id="promptInput" placeholder="Contoh: Hasilkan rekaan piala bola sepak. Asingkan tapak dan badan piala untuk dicantum secara 'flat-pack'."></textarea>
+    </div>
     
-    let app, auth, db;
-    try {
-        app = initializeApp(firebaseConfig);
-        auth = getAuth(app);
-        db = getFirestore(app);
-    } catch(e) { console.error("Firebase init error", e); }
+    <button id="generateBtn" onclick="generateDesign()">Jana Rekaan SVG</button>
 
-    let currentUser = null;
-    let userProfile = null;
-    let unsubscribeProfile = null;
-    let unsubscribeAdmin = null;
+    <div class="loader" id="loadingText">⏳ Gem sedang menjana kod vektor. Sila tunggu...</div>
+    <div class="error-msg" id="errorText"></div>
     
-    // UI Variables
-    let aspectRatio = 1;
-    let currentImageBase64 = null;
-    let currentImageMimeType = null;
+    <div id="sizeControls">
+        <label for="sizeSlider"><b>Laras Saiz Lebar Fizikal (cm):</b></label>
+        <input type="range" id="sizeSlider" class="slider" min="2" max="60" value="10" step="0.5" oninput="updateSize()">
+        <div class="size-display" id="sizeDisplay">Lebar: 10 cm | Tinggi: -- cm</div>
+        <button id="downloadBtn" onclick="downloadSVG()">Muat Turun Fail SVG (.svg)</button>
+    </div>
 
-    // --- UTILS ---
-    window.showToast = function(msg) {
-        const toast = document.getElementById('toast');
-        document.getElementById('toastMsg').innerText = msg;
-        toast.style.opacity = '1'; toast.style.bottom = '40px';
-        setTimeout(() => { toast.style.opacity = '0'; toast.style.bottom = '24px'; }, 4000);
+    <div id="preview-container">
+        <div id="preview">
+            <p style="color:#888;">Pratonton (Preview) rekaan akan dipaparkan di sini.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    const apiKey = ""; // API key diuruskan oleh persekitaran secara automatik
+    let aspectRatio = 1; 
+
+    // Arahan wajib yang mesti ada untuk format fail SVG yang betul
+    const baseInstruction = `
+    Hasilkan KOD SVG SAHAJA tanpa sebarang teks markdown (seperti \`\`\`svg). 
+    Mesti guna tag <g>. Susun bahagian secara 'flat-pack'. 
+    Mesti ada viewBox. 
+    Garisan Potong: stroke="#FF0000" stroke-width="2" fill="none". 
+    Garisan Ukir: fill="#000000" atau stroke="#000000". 
+    Tiada kotak background. Mula dgn <svg> dan tamat dgn </svg>.`;
+
+    // Senarai Profil "Gems" terbina dalam
+    const gemsProfiles = {
+        asas: "Anda adalah pakar pembuat fail vektor SVG umum untuk mesin pemotong laser (laser cut). Hasilkan rekaan yang ringkas dan mudah dipotong.",
+        kotak: "Anda adalah pakar jurutera reka bentuk pembungkusan dan kayu. Anda pakar menghasilkan rekaan kotak dan struktur 3D menggunakan teknik cantuman (tab and slot / kerf bending). Pastikan setiap rekaan mempunyai lubang slot dan gigi cantuman (tabs) yang sepadan untuk dipasang secara flat-pack.",
+        aksesori: "Anda adalah pakar pereka perhiasan dan aksesori (keychain, anting-anting, rantai). Anda pakar merancang rekaan bersaiz kecil yang kukuh. Pastikan SETIAP rekaan yang diminta mempunyai satu lubang kecil (hole) di bahagian atas berukuran sekurang-kurangnya 3mm radius untuk dimasukkan cincin besi (jump ring)."
     };
 
-    function switchView(viewId) {
-        ['authLoading', 'loginView', 'mainView', 'adminView'].forEach(id => {
-            document.getElementById(id).classList.add('hidden');
-        });
-        document.getElementById(viewId).classList.remove('hidden');
-        
-        if(viewId === 'mainView' || viewId === 'adminView') {
-            document.getElementById('navbar').classList.remove('hidden');
+    function toggleCustomGem() {
+        const selector = document.getElementById('gemSelector').value;
+        const customContainer = document.getElementById('customGemContainer');
+        if (selector === 'custom') {
+            customContainer.style.display = 'block';
         } else {
-            document.getElementById('navbar').classList.add('hidden');
+            customContainer.style.display = 'none';
         }
     }
 
-    // --- AUTHENTICATION & FIREBASE ---
-    onAuthStateChanged(auth, async (user) => {
-        currentUser = user;
-        if (user) {
-            document.getElementById('navAvatar').src = user.photoURL || 'https://ui-avatars.com/api/?name=' + (user.displayName || 'Test');
-            await setupUserProfile(user);
-        } else {
-            switchView('loginView');
-            if(unsubscribeProfile) unsubscribeProfile();
-            if(unsubscribeAdmin) unsubscribeAdmin();
-            userProfile = null;
-        }
-    });
-
-    window.loginWithGoogle = async function() {
-        try {
-            switchView('authLoading');
-            const provider = new GoogleAuthProvider();
-            await signInWithPopup(auth, provider);
-        } catch (error) {
-            console.error(error);
-            // KEMAS KINI: Berikan mesej ralat yang mengajar pengguna cara membetulkannya di Firebase
-            if (error.code === 'auth/unauthorized-domain' || error.message.includes('unauthorized-domain')) {
-                window.showToast("PENTING: Sila log masuk ke Firebase Console -> Authentication -> Settings -> Authorized domains, dan tambah domain Vercel anda.");
-                switchView('loginView');
-            } else {
-                window.showToast("Ralat log masuk: " + error.message);
-                switchView('loginView');
-            }
-        }
-    };
-
-    window.logout = async function() {
-        await signOut(auth);
-        window.showToast("Berjaya log keluar.");
-    };
-
-    async function setupUserProfile(user) {
-        const profileRef = doc(db, 'artifacts', appId, 'public', 'data', 'profiles', user.uid);
-        
-        try {
-            const docSnap = await getDoc(profileRef);
-            if (!docSnap.exists()) {
-                await setDoc(profileRef, {
-                    uid: user.uid,
-                    name: user.displayName || 'Pengguna',
-                    email: user.email || '',
-                    photoURL: user.photoURL || '',
-                    credits: 5,
-                    role: 'user',
-                    createdAt: serverTimestamp()
-                });
-            }
-
-            unsubscribeProfile = onSnapshot(profileRef, (doc) => {
-                if(doc.exists()) {
-                    userProfile = doc.data();
-                    document.getElementById('navCredits').innerText = `${userProfile.credits} Kredit`;
-                    
-                    if(userProfile.role === 'admin') {
-                        document.getElementById('navAdminBtn').classList.remove('hidden');
-                    } else {
-                        document.getElementById('navAdminBtn').classList.add('hidden');
-                    }
-                }
-            }, (error) => console.error(error));
-
-            switchView('mainView');
-
-        } catch (error) {
-            console.error("Ralat profail:", error);
-            window.showToast("Ralat Pangkalan Data: " + error.message);
-            if (auth.currentUser) await signOut(auth); 
-            switchView('loginView');
-        }
-    }
-
-    // --- ADMIN PANEL ---
-    window.toggleAdminView = function() {
-        const adminView = document.getElementById('adminView');
-        if(adminView.classList.contains('hidden')) {
-            switchView('adminView');
-            loadAdminData();
-        } else {
-            switchView('mainView');
-            if(unsubscribeAdmin) unsubscribeAdmin();
-        }
-    };
-
-    function loadAdminData() {
-        if(!userProfile || userProfile.role !== 'admin') return;
-        
-        const profilesRef = collection(db, 'artifacts', appId, 'public', 'data', 'profiles');
-        unsubscribeAdmin = onSnapshot(profilesRef, (snapshot) => {
-            const tableBody = document.getElementById('adminUserTable');
-            tableBody.innerHTML = '';
-            
-            snapshot.forEach(docSnap => {
-                const data = docSnap.data();
-                const tr = document.createElement('tr');
-                tr.className = "border-b border-slate-100 hover:bg-slate-50";
-                tr.innerHTML = `
-                    <td class="p-3 flex items-center gap-3">
-                        <img src="${data.photoURL || 'https://ui-avatars.com/api/?name=U'}" class="w-8 h-8 rounded-full">
-                        <span class="font-medium text-slate-800">${data.name}</span>
-                    </td>
-                    <td class="p-3 text-slate-500">${data.email}</td>
-                    <td class="p-3 font-bold text-blue-600">${data.credits}</td>
-                    <td class="p-3">
-                        <span class="px-2 py-1 text-xs rounded-full ${data.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-700'}">${data.role}</span>
-                    </td>
-                    <td class="p-3">
-                        <button onclick="window.adminAddCredit('${data.uid}')" class="text-xs bg-emerald-100 hover:bg-emerald-200 text-emerald-700 px-2 py-1 rounded border border-emerald-200">+10 Kredit</button>
-                    </td>
-                `;
-                tableBody.appendChild(tr);
-            });
-        }, (error) => console.error(error));
-    }
-
-    window.adminAddCredit = async function(targetUid) {
-        if(!userProfile || userProfile.role !== 'admin') return;
-        try {
-            const ref = doc(db, 'artifacts', appId, 'public', 'data', 'profiles', targetUid);
-            await updateDoc(ref, { credits: increment(10) });
-            window.showToast("Kredit pengguna ditambah!");
-        } catch(e) { window.showToast("Gagal menambah kredit."); }
-    }
-
-    // --- TOYYIBPAY SIMULATION ---
-    window.showPaymentModal = () => document.getElementById('paymentModal').classList.remove('hidden');
-    window.closePaymentModal = () => document.getElementById('paymentModal').classList.add('hidden');
-
-    window.processPayment = function(amountRM, creditsToAdd) {
-        window.closePaymentModal();
-        const procModal = document.getElementById('processingModal');
-        procModal.classList.remove('hidden');
-
-        setTimeout(async () => {
+    async function fetchWithRetry(url, options, maxRetries = 5) {
+        const delays = [1000, 2000, 4000, 8000, 16000];
+        for (let i = 0; i < maxRetries; i++) {
             try {
-                const profileRef = doc(db, 'artifacts', appId, 'public', 'data', 'profiles', currentUser.uid);
-                await updateDoc(profileRef, { credits: increment(creditsToAdd) });
-                
-                procModal.classList.add('hidden');
-                window.showToast(`Pembayaran RM${amountRM} berjaya! ${creditsToAdd} kredit ditambah.`);
-            } catch (e) {
-                procModal.classList.add('hidden');
-                window.showToast("Ralat kemaskini kredit.");
+                const response = await fetch(url, options);
+                if (!response.ok) throw new Error(`Ralat Pelayan: ${response.status}`);
+                return await response.json();
+            } catch (error) {
+                if (i === maxRetries - 1) throw error;
+                await new Promise(res => setTimeout(res, delays[i]));
             }
-        }, 2500);
-    };
+        }
+    }
 
-
-    // --- AI GENERATOR LOGIC ---
-
-    window.handleImageUpload = function(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            currentImageBase64 = e.target.result.split(',')[1];
-            currentImageMimeType = file.type;
-            document.getElementById('uploadPrompt').classList.add('hidden');
-            document.getElementById('imagePreviewContainer').classList.remove('hidden');
-            document.getElementById('imagePreviewContainer').classList.add('flex');
-            document.getElementById('imagePreview').src = e.target.result;
-            document.getElementById('imageName').innerText = file.name;
-        };
-        reader.readAsDataURL(file);
-    };
-
-    window.removeImage = function(event) {
-        if(event) event.preventDefault();
-        currentImageBase64 = null;
-        currentImageMimeType = null;
-        document.getElementById('imageInput').value = '';
-        document.getElementById('imagePreviewContainer').classList.add('hidden');
-        document.getElementById('imagePreviewContainer').classList.remove('flex');
-        document.getElementById('uploadPrompt').classList.remove('hidden');
-    };
-
-    window.generateDesign = async function() {
-        if(!userProfile) return;
-        
+    async function generateDesign() {
         const userPrompt = document.getElementById('promptInput').value.trim();
-        if(!userPrompt && !currentImageBase64) { 
-            window.showToast('Sila masukkan penerangan atau muat naik gambar!'); return; 
+        const errorText = document.getElementById('errorText');
+        
+        if(!userPrompt) { 
+            showError('Sila masukkan deskripsi rekaan (prompt) terlebih dahulu!'); 
+            return; 
         }
 
-        // --- CREDIT CHECK ---
-        if(userProfile.credits < 1) {
-            window.showToast('Baki kredit anda telah habis. Sila Topup.');
-            window.showPaymentModal();
-            return;
+        // Tentukan arahan spesifik Gem
+        const gemSelection = document.getElementById('gemSelector').value;
+        let specificGemInstruction = "";
+        
+        if (gemSelection === 'custom') {
+            specificGemInstruction = document.getElementById('customGemInput').value.trim();
+            if (!specificGemInstruction) {
+                showError('Sila masukkan arahan untuk Custom Gem anda.');
+                return;
+            }
+        } else {
+            specificGemInstruction = gemsProfiles[gemSelection];
         }
 
-        const btn = document.getElementById('generateBtn');
-        const spinner = document.getElementById('btnSpinner');
-        const btnText = document.getElementById('btnText');
-        const statusContainer = document.getElementById('statusContainer');
-        const progressBar = document.getElementById('progressBar');
-        const statusText = document.getElementById('statusText');
+        // Gabungkan arahan Gem dengan arahan wajib format SVG
+        const finalSystemInstruction = specificGemInstruction + "\n\nARAHAN WAJIB FORMAT:\n" + baseInstruction;
 
-        btn.disabled = true; spinner.classList.remove('hidden');
-        btnText.innerText = "Menjana..."; statusContainer.classList.remove('hidden');
-        progressBar.style.width = '20%'; statusText.innerText = "Memulakan proses AI...";
+        document.getElementById('loadingText').style.display = 'block';
+        document.getElementById('generateBtn').disabled = true;
+        errorText.style.display = 'none';
+        document.getElementById('preview').innerHTML = '<p style="color:#888;">Gem sedang memikirkan rekaan...</p>';
+        document.getElementById('sizeControls').style.display = 'none';
 
-        let extraInst = currentImageBase64 ? "CRITICAL: Trace the provided image carefully into a 2D laser-cut SVG." : "";
-        const systemPrompt = `You are an SVG generator for laser cutting. TASK: Create SVG based on: "${userPrompt}". ${extraInst}
-        RULES: 1. SVG CODE ONLY. 2. Flat-pack 2D design. 3. Red stroke (#FF0000) for cuts. 4. Black for engrave. 5. Include <title>.`;
-
-        const requestParts = [{ text: systemPrompt }];
-        if (currentImageBase64) requestParts.push({ inlineData: { mimeType: currentImageMimeType, data: currentImageBase64 } });
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+        
+        const payload = {
+            contents: [{ parts: [{ text: userPrompt }] }],
+            systemInstruction: { parts: [{ text: finalSystemInstruction }] }
+        };
 
         try {
-            progressBar.style.width = '50%'; statusText.innerText = "Menganalisa vektor...";
-            
-            // URL stabil untuk model gemini-1.5-flash
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-            
-            console.log("Memulakan permintaan ke API Gemini...");
-            const response = await fetch(url, {
-                method: 'POST', 
+            const data = await fetchWithRetry(url, {
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: requestParts }] })
+                body: JSON.stringify(payload)
             });
 
-            console.log("Status respons API:", response.status);
+            if (!data.candidates || data.candidates.length === 0) throw new Error("Tiada respons dari AI.");
 
-            if (!response.ok) {
-                let ralatText = await response.text();
-                console.error("Ralat pelayan:", ralatText);
-                throw new Error(`Ralat pelayan: Kod ${response.status}`);
-            }
+            let rawText = data.candidates[0].content.parts[0].text;
+            let generatedSVGCode = rawText.replace(/```svg/gi, '').replace(/```html/gi, '').replace(/```/g, '').trim();
 
-            const data = await response.json();
+            document.getElementById('preview').innerHTML = generatedSVGCode;
             
-            if (!data.candidates || data.candidates.length === 0) {
-                 throw new Error("API tidak mengembalikan apa-apa rekaan.");
-            }
-
-            progressBar.style.width = '80%'; statusText.innerText = "Menghalusi kod SVG...";
-            let rawText = data.candidates[0].content.parts[0].text || "";
-            let svgCode = rawText.replace(/```svg/g, '').replace(/```xml/g, '').replace(/```/g, '').trim();
-
-            if (!svgCode.includes('<svg')) throw new Error("Format SVG tidak sah dari AI.");
-
-            // --- CREDIT DEDUCTION (Success) ---
-            const profileRef = doc(db, 'artifacts', appId, 'public', 'data', 'profiles', currentUser.uid);
-            await updateDoc(profileRef, { credits: increment(-1) });
-
-            document.getElementById('preview').innerHTML = svgCode;
             const svgElement = document.querySelector('#preview svg');
             if(svgElement) {
-                svgElement.classList.add('max-w-full', 'h-auto');
+                svgElement.style.width = '100%';
+                svgElement.style.height = 'auto';
+
                 let viewBox = svgElement.getAttribute('viewBox');
                 if (viewBox) {
-                    let parts = viewBox.split(/[ ,]+/).filter(Boolean).map(Number);
-                    if(parts.length === 4) aspectRatio = parts[2] / parts[3];
+                    let parts = viewBox.split(/[\s,]+/).map(Number);
+                    if(parts.length === 4 && parts[3] > 0) {
+                        aspectRatio = parts[2] / parts[3]; 
+                    }
+                } else {
+                    let w = parseFloat(svgElement.getAttribute('width')) || 100;
+                    let h = parseFloat(svgElement.getAttribute('height')) || 100;
+                    aspectRatio = w / h;
+                    svgElement.setAttribute('viewBox', `0 0 ${w} ${h}`);
                 }
-                document.getElementById('sizeControls').classList.remove('hidden');
-                window.updateSize();
-                window.showToast('Rekaan berjaya dijana! 1 Kredit ditolak.');
+                
+                document.getElementById('sizeControls').style.display = 'block';
+                document.getElementById('downloadBtn').style.display = 'block';
+                document.getElementById('sizeSlider').value = 10; 
+                updateSize(); 
+            } else {
+                throw new Error("Kod yang dijana bukan format SVG yang sah.");
             }
-            progressBar.style.width = '100%';
+
         } catch (error) {
-            console.error("Ralat terperinci:", error); 
-            window.showToast("Gagal: " + error.message);
+            console.error('Ralat:', error);
+            showError('Gagal menjana rekaan. Ralat: ' + error.message);
+            document.getElementById('preview').innerHTML = '<p style="color:#888;">Sila cuba lagi.</p>';
         } finally {
-            btn.disabled = false; spinner.classList.add('hidden');
-            btnText.innerText = "Jana Rekaan (Tolak 1 Kredit)";
-            setTimeout(() => { statusContainer.classList.add('hidden'); progressBar.style.width = '0%'; }, 2000);
+            document.getElementById('loadingText').style.display = 'none';
+            document.getElementById('generateBtn').disabled = false;
         }
-    };
+    }
 
-    window.updateSize = function() {
-        const widthCm = parseFloat(document.getElementById('sizeSlider').value);
-        const heightCm = (widthCm / aspectRatio).toFixed(1); 
-        document.getElementById('sizeDisplay').innerText = `W: ${widthCm}cm | H: ${heightCm}cm`;
+    function showError(msg) {
+        const errorText = document.getElementById('errorText');
+        errorText.innerText = msg;
+        errorText.style.display = 'block';
+    }
+
+    function updateSize() {
+        const sliderVal = document.getElementById('sizeSlider').value;
+        const widthCm = parseFloat(sliderVal);
+        const heightCm = (widthCm / aspectRatio).toFixed(2); 
+
+        document.getElementById('sizeDisplay').innerHTML = `Lebar (Width): <b>${widthCm} cm</b> &nbsp;|&nbsp; Tinggi (Height): <b>${heightCm} cm</b>`;
+
         const svgElement = document.querySelector('#preview svg');
-        if (svgElement) { svgElement.setAttribute('width', `${widthCm}cm`); svgElement.setAttribute('height', `${heightCm}cm`); }
-    };
+        if (svgElement) {
+            svgElement.setAttribute('width', `${widthCm}cm`);
+            svgElement.setAttribute('height', `${heightCm}cm`);
+        }
+    }
 
-    window.downloadSVG = function() {
+    function downloadSVG() {
         const svgElement = document.querySelector('#preview svg');
         if(!svgElement) return;
-        const code = new XMLSerializer().serializeToString(svgElement);
+
+        const cloneSVG = svgElement.cloneNode(true);
+        cloneSVG.style.width = '';
+        cloneSVG.style.height = '';
+
+        const serializer = new XMLSerializer();
+        let finalSVGCode = serializer.serializeToString(cloneSVG);
+        
+        if (!finalSVGCode.includes('xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)"')) {
+            finalSVGCode = finalSVGCode.replace('<svg ', '<svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" ');
+        }
+
+        const blob = new Blob([finalSVGCode], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(new Blob([code], { type: 'image/svg+xml' }));
-        a.download = `laser_design_${Date.now()}.svg`;
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    };
-
-    window.copyToClipboard = function() {
-        const svgElement = document.querySelector('#preview svg');
-        if(!svgElement) return;
-        const textArea = document.createElement("textarea");
-        textArea.value = new XMLSerializer().serializeToString(svgElement);
-        document.body.appendChild(textArea); textArea.select();
-        try { document.execCommand('copy'); window.showToast('Kod disalin ke clipboard!'); } 
-        catch (err) { window.showToast('Gagal menyalin kod.'); }
-        document.body.removeChild(textArea);
-    };
-
-    window.clearAll = function() {
-        document.getElementById('promptInput').value = '';
-        window.removeImage();
-        document.getElementById('preview').innerHTML = `<div class="text-center text-slate-400">Pratonton akan muncul di sini</div>`;
-        document.getElementById('sizeControls').classList.add('hidden');
-    };
+        a.href = url;
+        a.download = 'rekaan_lasercut.svg';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
 </script>
 
 </body>
