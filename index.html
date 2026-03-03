@@ -124,6 +124,7 @@
             border-radius: 6px;
             margin-top: 15px;
             font-weight: 500;
+            white-space: pre-wrap;
         }
         
         /* Gaya untuk Slider */
@@ -209,10 +210,9 @@
 </div>
 
 <script>
-    const apiKey = ""; // API key diuruskan oleh persekitaran secara automatik
+    const apiKey = ""; 
     let aspectRatio = 1; 
 
-    // Arahan wajib yang mesti ada untuk format fail SVG yang betul
     const baseInstruction = `
     Hasilkan KOD SVG SAHAJA tanpa sebarang teks markdown (seperti \`\`\`svg). 
     Mesti guna tag <g>. Susun bahagian secara 'flat-pack'. 
@@ -221,7 +221,6 @@
     Garisan Ukir: fill="#000000" atau stroke="#000000". 
     Tiada kotak background. Mula dgn <svg> dan tamat dgn </svg>.`;
 
-    // Senarai Profil "Gems" terbina dalam
     const gemsProfiles = {
         asas: "Anda adalah pakar pembuat fail vektor SVG umum untuk mesin pemotong laser (laser cut). Hasilkan rekaan yang ringkas dan mudah dipotong.",
         kotak: "Anda adalah pakar jurutera reka bentuk pembungkusan dan kayu. Anda pakar menghasilkan rekaan kotak dan struktur 3D menggunakan teknik cantuman (tab and slot / kerf bending). Pastikan setiap rekaan mempunyai lubang slot dan gigi cantuman (tabs) yang sepadan untuk dipasang secara flat-pack.",
@@ -231,11 +230,7 @@
     function toggleCustomGem() {
         const selector = document.getElementById('gemSelector').value;
         const customContainer = document.getElementById('customGemContainer');
-        if (selector === 'custom') {
-            customContainer.style.display = 'block';
-        } else {
-            customContainer.style.display = 'none';
-        }
+        customContainer.style.display = selector === 'custom' ? 'block' : 'none';
     }
 
     async function fetchWithRetry(url, options, maxRetries = 5) {
@@ -243,7 +238,10 @@
         for (let i = 0; i < maxRetries; i++) {
             try {
                 const response = await fetch(url, options);
-                if (!response.ok) throw new Error(`Ralat Pelayan: ${response.status}`);
+                if (!response.ok) {
+                    const errorData = await response.text();
+                    throw new Error(`Ralat Pelayan: ${response.status}\nButiran: ${errorData}`);
+                }
                 return await response.json();
             } catch (error) {
                 if (i === maxRetries - 1) throw error;
@@ -261,7 +259,6 @@
             return; 
         }
 
-        // Tentukan arahan spesifik Gem
         const gemSelection = document.getElementById('gemSelector').value;
         let specificGemInstruction = "";
         
@@ -275,7 +272,6 @@
             specificGemInstruction = gemsProfiles[gemSelection];
         }
 
-        // Gabungkan arahan Gem dengan arahan wajib format SVG
         const finalSystemInstruction = specificGemInstruction + "\n\nARAHAN WAJIB FORMAT:\n" + baseInstruction;
 
         document.getElementById('loadingText').style.display = 'block';
@@ -328,19 +324,21 @@
                 document.getElementById('sizeSlider').value = 10; 
                 updateSize(); 
             } else {
-                throw new Error("Kod yang dijana bukan format SVG yang sah.");
+                throw new Error("Kod yang dijana bukan format SVG yang sah.\n\nRespons asal:\n" + rawText.substring(0, 100) + "...");
             }
 
         } catch (error) {
-            console.error('Ralat:', error);
-            let userFriendlyMessage = error.message;
+            console.error('Ralat Penuh:', error);
+            let userFriendlyMessage = "Masalah sambungan atau format: " + error.message;
             if (error.message.includes('403')) {
                 userFriendlyMessage = "Akses API ditolak (Ralat 403). Sila cuba sebentar lagi atau pastikan anda disambung ke rangkaian yang dibenarkan.";
             } else if (error.message.includes('429')) {
                 userFriendlyMessage = "Terlalu banyak permintaan (Ralat 429). Sistem sedang sibuk. Sila cuba lagi dalam beberapa minit.";
+            } else if (error.message.includes('400')) {
+                userFriendlyMessage = "Ralat permintaan (Ralat 400). Sila semak semula input anda atau format pelayan mungkin telah berubah.";
             }
             
-            showError('Gagal menjana rekaan. ' + userFriendlyMessage);
+            showError('Gagal menjana rekaan.\n' + userFriendlyMessage);
             document.getElementById('preview').innerHTML = '<p style="color:#888;">Sila cuba lagi.</p>';
         } finally {
             document.getElementById('loadingText').style.display = 'none';
@@ -374,7 +372,6 @@
 
         const cloneSVG = svgElement.cloneNode(true);
         
-        // Buang stail paparan dan pastikan atribut fizikal diset dalam cm
         cloneSVG.style.width = '';
         cloneSVG.style.height = '';
         
@@ -382,15 +379,14 @@
         const widthCm = parseFloat(sliderVal);
         const heightCm = (widthCm / aspectRatio).toFixed(2); 
 
-        // Set ukuran rasmi kepada ukuran fizikal (cm)
         cloneSVG.setAttribute('width', `${widthCm}cm`);
         cloneSVG.setAttribute('height', `${heightCm}cm`);
 
         const serializer = new XMLSerializer();
         let finalSVGCode = serializer.serializeToString(cloneSVG);
         
-        if (!finalSVGCode.includes('xmlns="http://www.w3.org/2000/svg"')) {
-            finalSVGCode = finalSVGCode.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" ');
+        if (!finalSVGCode.includes('xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)"')) {
+            finalSVGCode = finalSVGCode.replace('<svg ', '<svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" ');
         }
 
         const blob = new Blob([finalSVGCode], { type: 'image/svg+xml;charset=utf-8' });
